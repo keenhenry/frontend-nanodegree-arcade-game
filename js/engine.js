@@ -19,10 +19,11 @@ var Engine = (function(global) {
      * create the canvas element, grab the 2D context for that canvas
      * set the canvas elements height/width and add it to the DOM.
      */
-    var doc = global.document,
-        win = global.window,
-        canvas = doc.createElement('canvas'),
-        ctx = canvas.getContext('2d'),
+    var doc       = global.document,
+        win       = global.window,
+        canvas    = doc.createElement('canvas'),
+        ctx       = canvas.getContext('2d'),
+        conGame   = true,
         lastTime;
 
     canvas.width = 505;
@@ -56,7 +57,8 @@ var Engine = (function(global) {
         /* Use the browser's requestAnimationFrame function to call this
          * function again as soon as the browser is able to draw another frame.
          */
-        win.requestAnimationFrame(main);
+        if ( conGame )
+            win.requestAnimationFrame(main);
     };
 
     /* This function does some initial setup that should only occur once,
@@ -80,7 +82,8 @@ var Engine = (function(global) {
      */
     function update(dt) {
         updateEntities(dt);
-        // checkCollisions();
+        checkWin();
+        checkCollisions();
     }
 
     /* This is called by the update function  and loops through all of the
@@ -95,6 +98,32 @@ var Engine = (function(global) {
             enemy.update(dt);
         });
         player.update();
+    }
+
+    function checkCollisions() {
+        for (var i = 0; i < allEnemies.length; ++i) {
+            // collision happens!
+            if ( allEnemies[i].col == player.col &&
+                 allEnemies[i].row == player.row )
+            {
+                if (!win.confirm("Game Over! Continue Playing?"))
+                {
+                    conGame = false;
+                }
+                reset();
+            }
+        }
+    }
+
+    function checkWin() {
+        if ( player.row == 0 )
+        {
+            if (!win.confirm("You Win! Continue Playing?"))
+            {
+                conGame = false;
+            }
+            reset();
+        }
     }
 
     /* This function initially draws the "game level", it will then call
@@ -160,7 +189,12 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
+        allEnemies = [];
+        player     = new Player(2, 101, 5, 83, 'images/char-boy.png');
+
+        for (var row = 1; row < 4; ++row) {
+            allEnemies.push(new Enemy(0, 101, row, 70, 'images/enemy-bug.png', row*0.5));
+        }
     }
 
     /* Go ahead and load all of the images we know we're going to need to
